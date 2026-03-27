@@ -101,6 +101,15 @@ export const Sidebar = () => {
     return { percent: total > 0 ? Math.round((mastered / total) * 100) : 0, mastered, total };
   }, [lessonMap, progress, activeCurriculum]);
 
+  const learnPath = useMemo(() => {
+    if (progress.onboardingCompleted && progress.lastVisited?.topicId) {
+      const { topicId, lessonId } = progress.lastVisited;
+      return `/topic/${topicId}${lessonId ? `?lesson=${lessonId}` : ''}`;
+    }
+    if (progress.onboardingCompleted) return '/dashboard';
+    return '/welcome';
+  }, [progress]);
+
 
   const toggleExpand = (id: string) => {
     const next = new Set(expandedTopics);
@@ -192,12 +201,16 @@ export const Sidebar = () => {
         </div>
 
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.25rem', alignItems: 'center' }}>
-          <NavLink to="/" title="Learn">
-            {({ isActive }) => (
-              <div className={`nav-btn ${isActive && !isPlayground && !isDashboard ? 'active' : ''}`}>
-                <BookOpen size={18} strokeWidth={1.75} />
-              </div>
-            )}
+          <NavLink to={learnPath} title="Learn">
+            {({ isActive }) => {
+              // Special isActive logic: if we are in any topic, the 'Learn' button should be active
+              const isLearnActive = isActive || location.pathname.startsWith('/topic/');
+              return (
+                <div className={`nav-btn ${isLearnActive && !isPlayground && !isDashboard ? 'active' : ''}`}>
+                  <BookOpen size={18} strokeWidth={1.75} />
+                </div>
+              );
+            }}
           </NavLink>
           <NavLink to="/dashboard" title="Dashboard">
             {({ isActive }) => (

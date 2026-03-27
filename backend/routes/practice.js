@@ -9,21 +9,42 @@ const {
 
 router.post('/generate', async (req, res) => {
   try {
-    const { topicId, lessonId, lessonTitle, lessonSummary } = req.body;
+    const { topicId, lessonId, lessonTitle, lessonSummary, lessonContent } = req.body;
 
-    if (!isString(topicId) || !topicId.trim() || !isString(lessonId) || !lessonId.trim() || !isString(lessonSummary) || !lessonSummary.trim()) {
-      return res.status(400).json({ error: 'topicId, lessonId, and lessonSummary are required.' });
+    // Accept either lessonSummary (string) or lessonContent (array of strings from frontend)
+    const rawContent = isString(lessonSummary) && lessonSummary.trim()
+      ? lessonSummary
+      : Array.isArray(lessonContent)
+        ? lessonContent.join('\n')
+        : '';
+
+    if (!isString(topicId) || !topicId.trim() || !isString(lessonId) || !lessonId.trim() || !rawContent.trim()) {
+      return res.status(400).json({ error: 'topicId, lessonId, and lessonSummary (or lessonContent) are required.' });
     }
-    if (lessonSummary.length > MAX_PRACTICE_CONTEXT_LENGTH) {
-      return res.status(400).json({ error: `lessonSummary too large. Maximum ${MAX_PRACTICE_CONTEXT_LENGTH} characters.` });
-    }
+
+    // Trim to max allowed length
+    const lessonContext = rawContent.slice(0, MAX_PRACTICE_CONTEXT_LENGTH);
 
     if (!hasGeminiKey()) {
-      return res.json(defaultChallenge({ topicId, lessonTitle, lessonSummary }));
+      return res.json(defaultChallenge({ topicId, lessonTitle, lessonSummary: lessonContext }));
     }
 
     const model = createGeminiModel();
-    const prompt = `Create a single realistic, time-bound coding challenge for this lesson.\nReturn ONLY valid JSON with keys: title, difficulty(one of easy|medium|hard), durationMinutes(number), instructions(array of 3-5 strings), starterCode(string).\nTopic: ${topicId}\nLesson: ${lessonTitle || lessonId}\nLesson summary: ${lessonSummary}`;
+
+    // Prompt explicitly anchors the challenge to the specific concept taught in the lesson,
+    // not just the general topic — this is the core alignment fix.
+    const prompt = `You are creating a coding practice challenge. The challenge MUST test the SPECIFIC concept taught in the lesson below — not general ${topicId} knowledge.
+
+Lesson title: ${lessonTitle || lessonId}
+Lesson content:
+${lessonContext}
+
+Rules:
+- The challenge must directly exercise the concept explained above (e.g. if the lesson is about indexes, the challenge must involve writing or reasoning about indexes — not generic SQL).
+- The starterCode must reflect the lesson's exact topic with relevant variable names and structure.
+- Keep instructions practical and concrete, not vague.
+
+Return ONLY valid JSON with these keys: title, difficulty (easy|medium|hard), durationMinutes (number), instructions (array of 3-5 strings), starterCode (string).`;
 
     const result = await model.generateContent(prompt);
     const response = await result.response;
@@ -31,7 +52,7 @@ router.post('/generate', async (req, res) => {
     const parsed = parseJsonFromText(text);
 
     if (!parsed || !isString(parsed.title) || !Array.isArray(parsed.instructions) || !isString(parsed.starterCode)) {
-      return res.json(defaultChallenge({ topicId, lessonTitle, lessonSummary }));
+      return res.json(defaultChallenge({ topicId, lessonTitle, lessonSummary: lessonContext }));
     }
 
     const difficulty = ['easy', 'medium', 'hard'].includes(parsed.difficulty) ? parsed.difficulty : inferDifficulty(lessonTitle);

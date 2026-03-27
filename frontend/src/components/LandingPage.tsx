@@ -139,7 +139,10 @@ export const LandingPage: React.FC = () => {
 
   useEffect(() => {
     apiRequest<ProgressRecord>('/api/progress')
-      .then(d => setProgress(d))
+      .then(d => {
+        setProgress(d);
+        if (d?.onboardingCompleted) handleCTA();
+      })
       .catch(() => {})
       .finally(() => setIsLoading(false));
   }, []);

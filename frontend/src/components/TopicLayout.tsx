@@ -171,7 +171,7 @@ export const TopicLayout = () => {
     try {
       const data = await apiRequest<unknown>('/api/practice/generate', {
         method: 'POST',
-        body: { topicId: id, lessonId: activeLesson.id, lessonTitle: activeLesson.title, lessonContent: activeLesson.content }
+        body: { topicId: id, lessonId: activeLesson.id, lessonTitle: activeLesson.title, lessonContent: activeLesson.content, lessonSummary: activeLesson.content?.join('\n') || '' }
       });
       // Verification check: ensure lesson matches current selection after async delay
       const currentParams = new URLSearchParams(window.location.search);
@@ -863,13 +863,39 @@ const QuizModal = ({ quiz, onClose, onComplete }: { quiz: any[], onClose: () => 
               </div>
 
               {selectedIdx !== null && (
-                <button
-                  onClick={handleNext}
-                  className="btn-primary"
-                  style={{ width: '100%', marginTop: '2rem' }}
-                >
-                  {currentIdx === quiz.length - 1 ? 'Finish' : 'Next Question'}
-                </button>
+                <>
+                  {quiz[currentIdx].explanation && (
+                    <div style={{
+                      marginTop: '1.25rem',
+                      padding: '0.875rem 1rem',
+                      background: selectedIdx === quiz[currentIdx].correctAnswerIndex
+                        ? 'var(--success-dim)' : 'var(--danger-dim)',
+                      border: `1px solid ${selectedIdx === quiz[currentIdx].correctAnswerIndex
+                        ? 'rgba(16,185,129,0.25)' : 'rgba(244,63,94,0.25)'}`,
+                      borderRadius: 8,
+                      fontSize: '0.8rem',
+                      color: 'var(--text-secondary)',
+                      lineHeight: 1.55,
+                    }}>
+                      <span style={{
+                        fontWeight: 700,
+                        color: selectedIdx === quiz[currentIdx].correctAnswerIndex
+                          ? 'var(--success)' : 'var(--danger)',
+                        marginRight: '0.4rem',
+                      }}>
+                        {selectedIdx === quiz[currentIdx].correctAnswerIndex ? '✓ Correct.' : '✗ Incorrect.'}
+                      </span>
+                      {quiz[currentIdx].explanation}
+                    </div>
+                  )}
+                  <button
+                    onClick={handleNext}
+                    className="btn-primary"
+                    style={{ width: '100%', marginTop: '1rem' }}
+                  >
+                    {currentIdx === quiz.length - 1 ? 'Finish' : 'Next Question'}
+                  </button>
+                </>
               )}
             </>
           ) : (

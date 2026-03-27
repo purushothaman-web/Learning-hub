@@ -1,13 +1,164 @@
 import { useEffect, useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, AreaChart, Area } from 'recharts';
-import { Trophy, Target, Zap, TrendingUp, ArrowUpRight, Activity, BarChart2, Lock, CheckCircle2, ChevronRight, Cpu, RefreshCw, Calendar, RotateCcw } from 'lucide-react';
+import { Trophy, Target, Zap, TrendingUp, ArrowUpRight, Activity, BarChart2, Lock, CheckCircle2, ChevronRight, Cpu, RefreshCw, Calendar, RotateCcw, BookOpen, Clock, ArrowRight, Flame } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { apiRequest } from '../lib/api';
 import { curriculum } from '../data/curriculum';
 import { CAREER_PATHS, type CareerPath } from '../data/paths';
 import { useNavigate } from 'react-router-dom';
 import { lessonsData } from '../data/lessons';
-import type { ProgressRecord } from '../types/curriculum';
+import type { ProgressRecord, Lesson, Topic } from '../types/curriculum';
+
+// ── Today's Focus logic ───────────────────────────────────────────────────────
+// Returns the single most relevant lesson for the user to work on right now.
+// Priority: (1) lastVisited if not yet mastered, (2) first unmastered lesson
+// in their active curriculum order.
+function getTodaysFocus(
+  progress: ProgressRecord,
+  activeCurriculum: Topic[]
+): { topic: Topic; lesson: Lesson; resuming: boolean } | null {
+  // Helper: is this lesson mastered?
+  const isMastered = (topicId: string, lessonId: string) =>
+    ((progress[topicId] as string[]) || []).includes(lessonId);
+
+  // Priority 1 — resume lastVisited if not yet mastered
+  if (progress.lastVisited?.topicId && progress.lastVisited?.lessonId) {
+    const { topicId, lessonId } = progress.lastVisited;
+    const topic = activeCurriculum.find(t => t.id === topicId);
+    const lesson = (lessonsData[topicId] || []).find((l: Lesson) => l.id === lessonId);
+    if (topic && lesson && !isMastered(topicId, lessonId)) {
+      return { topic, lesson, resuming: true };
+    }
+  }
+
+  // Priority 2 — first unmastered lesson across the active curriculum in order
+  for (const topic of activeCurriculum) {
+    const lessons: Lesson[] = lessonsData[topic.id] || [];
+    for (const lesson of lessons) {
+      if (!isMastered(topic.id, lesson.id)) {
+        return { topic, lesson, resuming: false };
+      }
+    }
+  }
+
+  // All mastered — nothing to suggest
+  return null;
+}
+
+// ── TodaysFocus card component ────────────────────────────────────────────────
+interface TodaysFocusProps {
+  focus: { topic: Topic; lesson: Lesson; resuming: boolean };
+  onGo: () => void;
+}
+
+const TodaysFocusCard = ({ focus, onGo }: TodaysFocusProps) => {
+  const readMins = Math.ceil((focus.lesson.content?.length || 3) * 1.5);
+  const levelColor =
+    focus.topic.level === 'Foundations' ? 'var(--info)'
+    : focus.topic.level === 'Mastery'   ? 'var(--accent)'
+    : focus.topic.level === 'DSA'       ? '#8b5cf6'
+    : 'var(--success)';
+
+  return (
+    <div style={{
+      marginBottom: '2rem',
+      padding: '1.5rem',
+      background: 'var(--bg-surface)',
+      border: '1px solid var(--border-accent)',
+      borderRadius: 16,
+      position: 'relative',
+      overflow: 'hidden',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '1.5rem',
+    }}>
+      {/* Accent glow */}
+      <div style={{
+        position: 'absolute', top: 0, left: 0, right: 0, height: 2,
+        background: 'linear-gradient(90deg, var(--accent), transparent)',
+      }} />
+      <div style={{
+        position: 'absolute', top: 0, right: 0,
+        width: 200, height: 120,
+        background: 'radial-gradient(ellipse at top right, rgba(245,158,11,0.07), transparent 70%)',
+        pointerEvents: 'none',
+      }} />
+
+      {/* Icon */}
+      <div style={{
+        width: 52, height: 52, flexShrink: 0, borderRadius: 14,
+        background: 'var(--accent-dim)',
+        border: '1px solid var(--border-accent)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+      }}>
+        {focus.resuming
+          ? <Flame size={22} style={{ color: 'var(--accent)' }} />
+          : <BookOpen size={22} style={{ color: 'var(--accent)' }} />
+        }
+      </div>
+
+      {/* Text */}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.35rem', flexWrap: 'wrap' }}>
+          <span style={{
+            fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.18em',
+            textTransform: 'uppercase', color: 'var(--accent)',
+          }}>
+            {focus.resuming ? 'Resume where you left off' : "Today's focus"}
+          </span>
+          <span style={{
+            fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.1em',
+            textTransform: 'uppercase', color: levelColor,
+            background: `${levelColor}18`,
+            padding: '0.15rem 0.5rem', borderRadius: 99,
+          }}>
+            {focus.topic.level}
+          </span>
+        </div>
+
+        <div style={{
+          fontSize: '1rem', fontWeight: 700,
+          color: 'var(--text-primary)',
+          letterSpacing: '-0.01em',
+          marginBottom: '0.25rem',
+          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+        }}>
+          {focus.lesson.title}
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+          <span style={{ fontSize: '0.78rem', color: 'var(--text-faint)' }}>
+            {focus.topic.title}
+          </span>
+          <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.72rem', color: 'var(--text-faint)' }}>
+            <Clock size={11} /> ~{readMins} min read
+          </span>
+          {focus.lesson.badge && (
+            <span style={{
+              fontSize: '0.62rem', fontWeight: 700,
+              color: 'var(--text-faint)',
+              background: 'var(--bg-raised)',
+              border: '1px solid var(--border)',
+              padding: '0.15rem 0.5rem', borderRadius: 6,
+            }}>
+              {focus.lesson.badge}
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* CTA */}
+      <button
+        onClick={onGo}
+        className="btn-primary"
+        style={{ flexShrink: 0, padding: '0.65rem 1.25rem', gap: '0.5rem' }}
+      >
+        {focus.resuming ? 'Continue' : 'Start lesson'}
+        <ArrowRight size={14} />
+      </button>
+    </div>
+  );
+};
 
 interface Stats {
   totalAttempts: number;
@@ -171,6 +322,18 @@ export const Dashboard = () => {
             <RefreshCw size={14} /> Change Path
           </button>
         </header>
+
+        {/* Today's Focus */}
+        {(() => {
+          const focus = getTodaysFocus(progress as ProgressRecord, activeCurriculum);
+          if (!focus) return null;
+          return (
+            <TodaysFocusCard
+              focus={focus}
+              onGo={() => navigate(`/topic/${focus.topic.id}?lesson=${focus.lesson.id}`)}
+            />
+          );
+        })()}
 
         {/* Mandatory Mission Section */}
         {isBeginner && mandatoryTopicsList.length > 0 && (
@@ -355,7 +518,7 @@ export const Dashboard = () => {
         </div>
 
         {/* Charts */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: '1.25rem' }}>
 
           {/* Growth Chart */}
           <div className="card" style={{ overflow: 'hidden' }}>
@@ -367,8 +530,8 @@ export const Dashboard = () => {
               <TrendingUp size={14} style={{ color: 'var(--accent)' }} />
               <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-secondary)' }}>Score History</span>
             </div>
-            <div style={{ padding: '1.25rem', height: 280 }}>
-              <ResponsiveContainer width="100%" height="100%">
+            <div style={{ padding: '1rem', width: '100%', minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+              <ResponsiveContainer width="100%" height={220} debounce={1}>
                 <AreaChart data={stats.scoreHistory} margin={{ top: 4, right: 4, bottom: 0, left: -16 }}>
                   <defs>
                     <linearGradient id="scoreGrad" x1="0" y1="0" x2="0" y2="1">
@@ -396,8 +559,8 @@ export const Dashboard = () => {
               <Target size={14} style={{ color: 'var(--accent)' }} />
               <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-secondary)' }}>Topic Proficiency</span>
             </div>
-            <div style={{ padding: '1.25rem', height: 280 }}>
-              <ResponsiveContainer width="100%" height="100%">
+            <div style={{ padding: '1rem', width: '100%', minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+              <ResponsiveContainer width="100%" height={220} debounce={1}>
                 <BarChart data={chartData} layout="vertical" margin={{ top: 0, right: 16, bottom: 0, left: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="var(--border)" />
                   <XAxis type="number" domain={[0, 100]} hide />
