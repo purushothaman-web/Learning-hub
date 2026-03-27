@@ -1,0 +1,188 @@
+{
+  "sessions": [
+    {
+      "id": "log_1774509458248",
+      "topicId": "dsa-foundations",
+      "lessonId": "arrays-strings",
+      "durationSeconds": 60,
+      "timestamp": 1774509458248,
+      "date": "2026-03-26"
+    },
+    {
+      "id": "log_1774509518536",
+      "topicId": "dsa-foundations",
+      "lessonId": "arrays-strings",
+      "durationSeconds": 60,
+      "timestamp": 1774509518536,
+      "date": "2026-03-26"
+    },
+    {
+      "id": "log_1774509573475",
+      "topicId": "dsa-foundations",
+      "lessonId": "arrays-strings",
+      "durationSeconds": 54,
+      "timestamp": 1774509573475,
+      "date": "2026-03-26"
+    },
+    {
+      "id": "log_1774509635527",
+      "topicId": "dsa-foundations",
+      "lessonId": "arrays-strings",
+      "durationSeconds": 60,
+      "timestamp": 1774509635527,
+      "date": "2026-03-26"
+    },
+    {
+      "id": "log_1774509752882",
+      "topicId": "dsa-foundations",
+      "lessonId": "arrays-strings",
+      "durationSeconds": 60,
+      "timestamp": 1774509752882,
+      "date": "2026-03-26"
+    },
+    {
+      "id": "log_1774509970396",
+      "topicId": "node",
+      "lessonId": "node_0",
+      "durationSeconds": 7,
+      "timestamp": 1774509970396,
+      "date": "2026-03-26"
+    },
+    {
+      "id": "log_1774510030566",
+      "topicId": "html-css",
+      "lessonId": "hc_0",
+      "durationSeconds": 60,
+      "timestamp": 1774510030566,
+      "date": "2026-03-26"
+    },
+    {
+      "id": "log_1774510150595",
+      "topicId": "html-css",
+      "lessonId": "hc_0",
+      "durationSeconds": 119,
+      "timestamp": 1774510150595,
+      "date": "2026-03-26"
+    },
+    {
+      "id": "log_1774510270590",
+      "topicId": "html-css",
+      "lessonId": "hc_0",
+      "durationSeconds": 119,
+      "timestamp": 1774510270590,
+      "date": "2026-03-26"
+    },
+    {
+      "id": "log_1774510322020",
+      "topicId": "html-css",
+      "lessonId": "hc_0",
+      "durationSeconds": 51,
+      "timestamp": 1774510322020,
+      "date": "2026-03-26"
+    },
+    {
+      "id": "log_1774510593597",
+      "topicId": "html-css",
+      "lessonId": "hc_0",
+      "durationSeconds": 60,
+      "timestamp": 1774510593597,
+      "date": "2026-03-26"
+    },
+    {
+      "id": "log_1774510617599",
+      "topicId": "html-css",
+      "lessonId": "hc_0",
+      "durationSeconds": 24,
+      "timestamp": 1774510617599,
+      "date": "2026-03-26"
+    },
+    {
+      "id": "log_1774510651310",
+      "topicId": "html-css",
+      "lessonId": "hc_0",
+      "durationSeconds": 9,
+      "timestamp": 1774510651310,
+      "date": "2026-03-26"
+    },
+    {
+      "id": "log_1774510664778",
+      "topicId": "html-css",
+      "lessonId": "hc_0",
+      "durationSeconds": 11,
+      "timestamp": 1774510664778,
+      "date": "2026-03-26"
+    },
+    {
+      "id": "log_1774510725585",
+      "topicId": "html-css",
+      "lessonId": "hc_5",
+      "durationSeconds": 60,
+      "timestamp": 1774510725585,
+      "date": "2026-03-26"
+    },
+    {
+      "id": "log_1774510845591",
+      "topicId": "html-css",
+      "lessonId": "hc_5",
+      "durationSeconds": 119,
+      "timestamp": 1774510845591,
+      "date": "2026-03-26"
+    },
+    {
+      "id": "log_1774510858599",
+      "topicId": "html-css",
+      "lessonId": "hc_5",
+      "durationSeconds": 13,
+      "timestamp": 1774510858600,
+      "date": "2026-03-26"
+    },
+    {
+      "id": "log_1774510885558",
+      "topicId": "html-css",
+      "lessonId": "hc_5",
+      "durationSeconds": 26,
+      "timestamp": 1774510885558,
+      "date": "2026-03-26"
+    },
+    {
+      "id": "log_1774510945535",
+      "topicId": "html-css",
+      "lessonId": "hc_0",
+      "durationSeconds": 60,
+      "timestamp": 1774510945535,
+      "date": "2026-03-26"
+    },
+    {
+      "id": "log_1774511015532",
+      "topicId": "html-css",
+      "lessonId": "hc_5",
+      "durationSeconds": 60,
+      "timestamp": 1774511015532,
+      "date": "2026-03-26"
+    },
+    {
+      "id": "log_1774511075583",
+      "topicId": "html-css",
+      "lessonId": "hc_5",
+      "durationSeconds": 60,
+      "timestamp": 1774511075583,
+      "date": "2026-03-26"
+    },
+    {
+      "id": "log_1774511135596",
+      "topicId": "html-css",
+      "lessonId": "hc_5",
+      "durationSeconds": 60,
+      "timestamp": 1774511135596,
+      "date": "2026-03-26"
+    },
+    {
+      "id": "log_1774511235169",
+      "topicId": "html-css",
+      "lessonId": "hc_5",
+      "durationSeconds": 60,
+      "timestamp": 1774511235169,
+      "date": "2026-03-26"
+    }
+  ]
+}
