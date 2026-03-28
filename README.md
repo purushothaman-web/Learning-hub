@@ -16,19 +16,21 @@ Most online learning platforms stop at "hello world." I wanted to build a system
 ## ✨ Key Features
 
 - **🛡️ Studio Dimmed UI**: A professional, VS Code-inspired interface designed for deep focus and long learning sessions. High-contrast typography with `Outfit` and `JetBrains Mono`.
+- **🚀 Personalized Onboarding**:
+  - **Career Path Selection**: Choose from 6 professional tracks (Frontend, Backend, etc.).
+  - **Level Assessment**: Answer targeted questions to calibrate the curriculum to your expertise.
+- **⚡ Dynamic Momentum System**:
+  - **Live Targets**: Set daily learning goals (Relaxed, Standard, Intense) during onboarding.
+  - **Dashboard Popover**: Update your "Daily Target" masteries on the fly without resetting progress.
 - **🔄 The AI Learning Loop**: 
   - **Learn**: Deep dives into TS, Docker, CI/CD, and System Design.
   - **Generate**: One-click **AI Practice Lab** generation tailored to the specific lesson.
   - **Solve**: Integrated **Studio Sandbox** with real-time feedback and a **live-running timer**.
   - **Evaluate**: Automated AI grading with heatmaps of your strengths and gap analysis.
-- **📂 Search & Navigation**:
-  - **Premium Explorer**: Sidebar with nested topics and mastery tracking.
-  - **Fuzzy Search**: Real-time, debounced search across all lesson titles and body content with visual highlighting.
 - **📈 Stats Dashboard**:
   - **Learning Analytics**: Visual performance tracking using `recharts`.
   - **Growth Curve**: Interactive Area Charts showing score history.
   - **Metric Tiles**: At-a-glance mastery percentages and topic proficiency bars.
-- **🚀 Foundational Mission**: A dedicated "Start Here" roadmap for beginners to ensure mastery of baseline dependencies (Git, Linux, JS) before proceeding.
 - **🎯 DSA Milestone Track**: A parallel 3-tier track (Foundations, Mastery, Expert) with automated practice prompts triggered every 3 topics completed.
 
 ---
@@ -39,22 +41,24 @@ The "Learning Loop" is powered by a coordinated Frontend/Backend bridge:
 
 ```mermaid
 graph TD
-    A[Topic Explorer] --> B[Lesson Content]
-    B --> C[AI Practice Generator]
-    C --> D[Studio Playground]
-    D --> E[Universal Execution Kernel]
-    E --> F[AI Code Review & Scoring]
-    F --> G[Curriculum Navigation]
-    G --> A
+    A[Path Selection Hub] --> B[Assessment Onboarding]
+    B --> C[Topic Explorer]
+    C --> D[Lesson Content]
+    D --> E[AI Practice Generator]
+    E --> F[Studio Playground]
+    F --> G[Universal Execution Kernel]
+    G --> H[AI Code Review & Scoring]
+    H --> I[Dashboard Analytics]
+    I --> C
 ```
 
 ---
 
 ## 🛠️ Technology Stack
 
-- **Frontend**: React 18, Vite, TypeScript, Lucide Icons, HSL Design Tokens.
-- **Backend**: Node.js, Express, Google Gemini (Flash 2.0).
-- **Data**: Centralized JSON Curriculum & Lesson Vault.
+- **Frontend**: React 18, Vite, TypeScript, Lucide Icons, Framer Motion, Recharts.
+- **Backend**: Node.js, Express, Better-SQLite3, Google Gemini (Flash 2.0).
+- **Data**: Centralized SQLite Database for persistent progress, settings, and study sessions.
 
 ---
 
@@ -79,13 +83,13 @@ cd ../frontend && npm install
 Create a `.env` file in the `backend/` directory:
 ```env
 GEMINI_API_KEY=your_key_here
-PORT=5000
+PORT=3000
 ```
 
 ### 4. Launch
 ```bash
 # Start the Backend (Terminal 1)
-cd backend && node server.js
+cd backend && npm run dev
 
 # Start the Frontend (Terminal 2)
 cd frontend && npm run dev

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { curriculum } from '../data/curriculum';
-import { lessonsData } from '../data/lessons';
+import { lessonsData } from '../data/lessons/index';
 import { Check, ArrowRight, ArrowLeft, PlayCircle, Clock, ChevronRight, Sparkles, Copy, HelpCircle, BookOpen, X } from 'lucide-react';
 import { apiRequest } from '../lib/api';
 import type { Lesson, ProgressRecord, Topic } from '../types/curriculum';
@@ -239,24 +239,28 @@ export const TopicLayout = () => {
 
       {/* ── Top Header Bar ── */}
       <header style={{
-        height: 'var(--header-h)',
+        minHeight: 'var(--header-h)',
+        height: 'auto',
         borderBottom: '1px solid var(--border)',
         background: 'var(--bg-surface)',
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '0 1.5rem',
+        display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between',
+        padding: '0.75rem 1.5rem',
+        gap: '1rem',
         flexShrink: 0,
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.5rem' }}>
           <span style={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: levelColor(topicMeta.level) }}>
             {topicMeta.level}
           </span>
           <ChevronRight size={12} style={{ color: 'var(--text-faint)' }} />
-          <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 500 }}>{topicMeta.title}</span>
-          <ChevronRight size={12} style={{ color: 'var(--text-faint)' }} />
-          <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 600 }}>{activeLesson?.title}</span>
+          <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 500 }}>{topicMeta.title}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <ChevronRight size={12} style={{ color: 'var(--text-faint)' }} />
+            <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 600 }}>{activeLesson?.title}</span>
+          </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           {isActiveLessonMastered && (
             <span className="badge badge-success">
               <Check size={9} style={{ marginRight: 3 }} /> Mastered
@@ -294,8 +298,8 @@ export const TopicLayout = () => {
       )}
 
       {/* ── Scrollable Content ── */}
-      <div style={{ flex: 1, overflowY: 'auto' }}>
-        <div style={{ maxWidth: 740, margin: '0 auto', padding: '3rem 2rem 6rem' }} className="fade-up">
+      <div style={{ flex: 1, overflowY: 'auto', width: '100%' }}>
+        <div style={{ maxWidth: 800, margin: '0 auto', padding: 'clamp(2rem, 8vw, 4rem) clamp(1rem, 5vw, 2.5rem) 6rem' }} className="fade-up">
 
           {/* Lesson Title */}
           <div style={{ marginBottom: '2.5rem' }}>
@@ -486,12 +490,13 @@ export const TopicLayout = () => {
               </span>
             </div>
             
-            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 200px', gap: '1rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 260px), 1fr))', gap: '1rem' }}>
               <div style={{ 
                 background: 'var(--bg-surface)', 
                 border: '1px solid var(--border)', 
                 borderRadius: 12, 
-                padding: '1.25rem' 
+                padding: '1.5rem',
+                minWidth: 0
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1rem' }}>
                   <HelpCircle size={16} style={{ color: 'var(--info)' }} />
@@ -601,10 +606,11 @@ export const TopicLayout = () => {
                 background: 'var(--bg-surface)', 
                 border: '1px solid var(--border)', 
                 borderRadius: 12, 
-                padding: '1.25rem',
+                padding: '1.5rem',
                 display: 'flex',
                 flexDirection: 'column',
-                justifyContent: 'space-between'
+                justifyContent: 'space-between',
+                minWidth: 0
               }}>
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.5rem' }}>
@@ -619,7 +625,7 @@ export const TopicLayout = () => {
                   disabled={isGeneratingQuiz}
                   onClick={handleGenerateQuiz}
                   className="btn-ghost"
-                  style={{ width: '100%', marginTop: '1rem', fontSize: '0.75rem', borderColor: 'var(--success-dim)', color: 'var(--success)' }}
+                  style={{ width: '100%', marginTop: '1.25rem', fontSize: '0.75rem', borderColor: 'var(--success-dim)', color: 'var(--success)' }}
                 >
                    {isGeneratingQuiz ? 'Generating...' : 'Start Quiz'}
                 </button>
@@ -650,15 +656,15 @@ export const TopicLayout = () => {
                 </p>
               )}
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))', gap: '1.5rem' }}>
                 <div>
                   <div style={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--success)', marginBottom: '0.6rem' }}>
                     Strengths
                   </div>
-                  <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                  <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                     {latestPractice.strengths?.map((s, i) => (
-                      <li key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.4rem', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                        <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--success)', marginTop: 6, flexShrink: 0 }} />
+                      <li key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                        <div style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--success)', marginTop: 6, flexShrink: 0 }} />
                         {s}
                       </li>
                     ))}
@@ -668,10 +674,10 @@ export const TopicLayout = () => {
                   <div style={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--danger)', marginBottom: '0.6rem' }}>
                     Areas to Improve
                   </div>
-                  <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                  <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                     {latestPractice.gaps?.map((g, i) => (
-                      <li key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.4rem', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                        <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--danger)', marginTop: 6, flexShrink: 0 }} />
+                      <li key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                        <div style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--danger)', marginTop: 6, flexShrink: 0 }} />
                         {g}
                       </li>
                     ))}
@@ -733,35 +739,39 @@ export const TopicLayout = () => {
             </div>
           )}
 
-          {/* Footer Navigation */}
-          <footer style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-            <div>
+          {/* Footer Navigation - Responsive Row */}
+          <footer style={{ 
+            display: 'grid', 
+            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))', 
+            gap: '1rem' 
+          }}>
+            <div style={{ minWidth: 0 }}>
               {(prevLesson || prevTopic) && (
                 <button
                   onClick={() => prevLesson ? handleNavigate('lesson', prevLesson) : handleNavigate('topic', prevTopic)}
                   className="btn-ghost"
-                  style={{ width: '100%', justifyContent: 'flex-start', flexDirection: 'column', alignItems: 'flex-start', height: 'auto', padding: '0.875rem 1rem', gap: '0.25rem' }}
+                  style={{ width: '100%', justifyContent: 'flex-start', flexDirection: 'column', alignItems: 'flex-start', height: 'auto', padding: '1rem', gap: '0.4rem' }}
                 >
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.65rem', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.65rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-faint)' }}>
                     <ArrowLeft size={10} /> Previous
                   </span>
-                  <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                  <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', width: '100%', textAlign: 'left' }}>
                     {prevLesson?.title || prevTopic?.title}
                   </span>
                 </button>
               )}
             </div>
-            <div>
+            <div style={{ minWidth: 0 }}>
               {(nextLesson || nextTopic) && (
                 <button
                   onClick={() => nextLesson ? handleNavigate('lesson', nextLesson) : handleNavigate('topic', nextTopic)}
                   className="btn-ghost"
-                  style={{ width: '100%', justifyContent: 'flex-end', flexDirection: 'column', alignItems: 'flex-end', height: 'auto', padding: '0.875rem 1rem', gap: '0.25rem' }}
+                  style={{ width: '100%', justifyContent: 'flex-end', flexDirection: 'column', alignItems: 'flex-end', height: 'auto', padding: '1rem', gap: '0.4rem' }}
                 >
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.65rem', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.65rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--accent)' }}>
                     Next <ArrowRight size={10} />
                   </span>
-                  <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                  <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', width: '100%', textAlign: 'right' }}>
                     {nextLesson?.title || nextTopic?.title}
                   </span>
                 </button>
@@ -811,22 +821,76 @@ const QuizModal = ({ quiz, onClose, onComplete }: { quiz: any[], onClose: () => 
     <div style={{ 
       position: 'fixed', inset: 0, zIndex: 1100, 
       display: 'flex', alignItems: 'center', justifyContent: 'center',
-      padding: '1.5rem', background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(4px)'
+      padding: '2rem 1.5rem', background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)',
     }} className="fade-in">
       <div style={{ 
         width: '100%', maxWidth: 500, background: 'var(--bg-surface)', 
-        borderRadius: 16, border: '1px solid var(--border)',
-        overflow: 'hidden', boxShadow: '0 24px 64px rgba(0,0,0,0.5)'
+        borderRadius: 20, border: '1px solid var(--border)',
+        overflow: 'hidden', boxShadow: '0 24px 64px rgba(0,0,0,0.6)',
+        maxHeight: 'calc(100vh - 4rem)', // Leave space at top and bottom
+        display: 'flex',
+        flexDirection: 'column'
       }}>
-        <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h3 style={{ fontSize: '1rem', fontWeight: 700 }}>Quick Quiz</h3>
-          <span style={{ fontSize: '0.75rem', color: 'var(--text-faint)' }}>{currentIdx + 1} / {quiz.length}</span>
+        {/* Pinned Header */}
+        <div style={{ 
+          padding: '1.25rem 1.5rem', 
+          borderBottom: '1px solid var(--border)', 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center',
+          flexShrink: 0,
+          background: 'var(--bg-surface)'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <button 
+              onClick={() => {
+                if (!isFinished) {
+                  if (window.confirm("Are you sure you want to quit? Your progress in this quiz will be lost.")) {
+                    onClose();
+                  }
+                } else {
+                  onClose();
+                }
+              }}
+              title="Quit Quiz"
+              style={{ 
+                background: 'transparent', border: 'none', 
+                color: 'var(--text-faint)', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                padding: '0.25rem', borderRadius: '4px',
+                transition: 'all 0.15s'
+              }}
+              onMouseEnter={e => { e.currentTarget.style.color = 'var(--danger)'; e.currentTarget.style.background = 'rgba(244, 63, 94, 0.1)'; }}
+              onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-faint)'; e.currentTarget.style.background = 'transparent'; }}
+            >
+              <X size={18} />
+            </button>
+            <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-primary)' }}>Quick Quiz</h3>
+          </div>
+          <span style={{ 
+            fontSize: '0.75rem', 
+            fontWeight: 700,
+            color: 'var(--accent)',
+            background: 'var(--accent-dim)',
+            padding: '0.2rem 0.6rem',
+            borderRadius: '99px',
+            border: '1px solid var(--border-accent)'
+          }}>
+            {currentIdx + 1} / {quiz.length}
+          </span>
         </div>
 
-        <div style={{ padding: '2rem' }}>
+        {/* Scrollable Content */}
+        <div style={{ 
+          padding: '2rem', 
+          overflowY: 'auto', 
+          flex: 1,
+          scrollbarWidth: 'thin',
+          scrollbarColor: 'var(--bg-overlay) transparent'
+        }}>
           {!isFinished ? (
             <>
-              <p style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '2rem', lineHeight: 1.4 }}>
+              <p style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: '2rem', lineHeight: 1.4, color: 'var(--text-primary)' }}>
                 {quiz[currentIdx].question}
               </p>
               <div style={{ display: 'grid', gap: '0.75rem' }}>
@@ -851,9 +915,11 @@ const QuizModal = ({ quiz, onClose, onComplete }: { quiz: any[], onClose: () => 
                       key={i}
                       onClick={() => handleSelect(i)}
                       style={{ 
-                        padding: '1rem', borderRadius: 10, border: `1px solid ${borderColor}`,
-                        background: bgColor, textAlign: 'left', fontSize: '0.875rem',
-                        transition: 'all 0.2s', cursor: selectedIdx === null ? 'pointer' : 'default'
+                        padding: '1.1rem 1.25rem', borderRadius: 12, border: `2px solid ${borderColor}`,
+                        background: bgColor, textAlign: 'left', fontSize: '0.95rem',
+                        fontWeight: 500,
+                        transition: 'all 0.2s', cursor: selectedIdx === null ? 'pointer' : 'default',
+                        color: selectedIdx !== null && isSelected ? 'var(--text-primary)' : 'var(--text-secondary)'
                       }}
                     >
                       {opt}
@@ -863,47 +929,50 @@ const QuizModal = ({ quiz, onClose, onComplete }: { quiz: any[], onClose: () => 
               </div>
 
               {selectedIdx !== null && (
-                <>
+                <div style={{ marginTop: '2rem' }}>
                   {quiz[currentIdx].explanation && (
                     <div style={{
-                      marginTop: '1.25rem',
-                      padding: '0.875rem 1rem',
+                      marginBottom: '1.5rem',
+                      padding: '1rem 1.25rem',
                       background: selectedIdx === quiz[currentIdx].correctAnswerIndex
                         ? 'var(--success-dim)' : 'var(--danger-dim)',
                       border: `1px solid ${selectedIdx === quiz[currentIdx].correctAnswerIndex
-                        ? 'rgba(16,185,129,0.25)' : 'rgba(244,63,94,0.25)'}`,
-                      borderRadius: 8,
-                      fontSize: '0.8rem',
+                        ? 'rgba(16,185,129,0.2)' : 'rgba(244,63,94,0.2)'}`,
+                      borderRadius: 12,
+                      fontSize: '0.875rem',
                       color: 'var(--text-secondary)',
-                      lineHeight: 1.55,
+                      lineHeight: 1.6,
                     }}>
-                      <span style={{
-                        fontWeight: 700,
+                      <div style={{
+                        fontWeight: 800,
+                        fontSize: '0.75rem',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.05em',
                         color: selectedIdx === quiz[currentIdx].correctAnswerIndex
                           ? 'var(--success)' : 'var(--danger)',
-                        marginRight: '0.4rem',
+                        marginBottom: '0.5rem',
                       }}>
-                        {selectedIdx === quiz[currentIdx].correctAnswerIndex ? '✓ Correct.' : '✗ Incorrect.'}
-                      </span>
+                        {selectedIdx === quiz[currentIdx].correctAnswerIndex ? '✓ Correct Result' : '✗ Better Luck Next Time'}
+                      </div>
                       {quiz[currentIdx].explanation}
                     </div>
                   )}
                   <button
                     onClick={handleNext}
                     className="btn-primary"
-                    style={{ width: '100%', marginTop: '1rem' }}
+                    style={{ width: '100%' }}
                   >
-                    {currentIdx === quiz.length - 1 ? 'Finish' : 'Next Question'}
+                    {currentIdx === quiz.length - 1 ? 'Finish Quiz' : 'Next Question'}
                   </button>
-                </>
+                </div>
               )}
             </>
           ) : (
             <div style={{ textAlign: 'center', padding: '1rem 0' }}>
-              <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>{score === quiz.length ? '🌟' : '✅'}</div>
-              <h4 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.5rem' }}>Quiz Complete!</h4>
-              <p style={{ color: 'var(--text-faint)', marginBottom: '2rem' }}>You scored {score} out of {quiz.length}</p>
-              <button onClick={onClose} className="btn-primary" style={{ width: '100%' }}>Close</button>
+              <div style={{ fontSize: '4rem', marginBottom: '1.5rem' }}>{score === quiz.length ? '👑' : '🎯'}</div>
+              <h4 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '0.5rem', color: 'var(--text-primary)' }}>Quiz Complete!</h4>
+              <p style={{ color: 'var(--text-faint)', fontSize: '1rem', marginBottom: '2.5rem' }}>You mastered <strong>{score}</strong> out of {quiz.length} questions.</p>
+              <button onClick={onClose} className="btn-primary" style={{ width: '100%', padding: '1.1rem' }}>Return to Lesson</button>
             </div>
           )}
         </div>

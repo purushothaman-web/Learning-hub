@@ -59,13 +59,12 @@ export const Onboarding = () => {
 
   return (
     <div className="onboarding-flow" style={{
-      height: '100vh',
+      minHeight: '100%',
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
-      justifyContent: 'center',
       background: 'var(--bg-void)',
-      padding: '2rem'
+      padding: '4rem 2rem'
     }}>
       <div style={{ maxWidth: '600px', width: '100%' }}>
         {/* Progress Bar */}
@@ -98,7 +97,7 @@ export const Onboarding = () => {
           <ChevronLeft size={16} /> Back
         </button>
 
-        <h2 style={{ fontSize: '2rem', fontWeight: 800, marginBottom: '1.5rem', color: 'var(--text-primary)' }}>
+        <h2 style={{ fontSize: 'clamp(1.5rem, 6vw, 2.25rem)', fontWeight: 800, marginBottom: '2rem', color: 'var(--text-primary)', lineHeight: 1.2 }}>
           {QUESTIONS[currentStep].text}
         </h2>
 
@@ -110,13 +109,13 @@ export const Onboarding = () => {
                 key={option.id}
                 onClick={() => handleSelect(option.id)}
                 style={{
-                  padding: '1.25rem 1.5rem',
+                  padding: 'clamp(1rem, 3vw, 1.25rem) clamp(1.25rem, 4vw, 1.5rem)',
                   background: isSelected ? 'rgba(var(--accent-rgb), 0.1)' : 'var(--bg-surface)',
                   border: isSelected ? '2px solid var(--accent)' : '1px solid var(--border)',
                   borderRadius: '12px',
                   textAlign: 'left',
                   cursor: 'pointer',
-                  fontSize: '1rem',
+                  fontSize: 'clamp(0.9rem, 2vw, 1.05rem)',
                   fontWeight: 600,
                   color: isSelected ? 'var(--accent)' : 'var(--text-secondary)',
                   display: 'flex',

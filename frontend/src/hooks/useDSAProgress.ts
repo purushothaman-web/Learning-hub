@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from 'react';
-import { lessonsData } from '../data/lessons';
+import { lessonsData } from '../data/lessons/index';
 import { dsaProblems } from '../data/dsa-problems';
 import { apiRequest } from '../lib/api';
 import type { ProgressRecord, Lesson } from '../types/curriculum';

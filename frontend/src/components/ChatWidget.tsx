@@ -26,8 +26,15 @@ export const ChatWidget = () => {
 
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
+
+  useEffect(() => {
+    const handleResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Derive topic context from URL
   const topicContext = (() => {
@@ -96,8 +103,9 @@ export const ChatWidget = () => {
         <div
           className="scale-in"
           style={{
-            width: 360,
-            height: 520,
+            width: windowWidth < 450 ? 'calc(100vw - 3rem)' : 360,
+            height: windowWidth < 450 ? 'calc(100vh - 120px)' : 520,
+            maxHeight: '80vh',
             display: 'flex', flexDirection: 'column',
             marginBottom: '0.75rem',
             background: 'var(--bg-surface)',
@@ -105,6 +113,9 @@ export const ChatWidget = () => {
             borderRadius: 16,
             overflow: 'hidden',
             boxShadow: '0 24px 64px rgba(0,0,0,0.6)',
+            position: 'absolute',
+            bottom: '100%',
+            right: 0
           }}
         >
           {/* Header */}

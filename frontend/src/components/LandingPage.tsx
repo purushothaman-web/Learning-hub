@@ -190,14 +190,15 @@ export const LandingPage: React.FC = () => {
           HERO
       ══════════════════════════════════════════════════ */}
       <section style={{ position: 'relative', zIndex: 1 }}>
-        <div style={{ maxWidth: 1120, margin: '0 auto', padding: '3rem 3rem 0' }}>
+        <div style={{ maxWidth: 1120, margin: '0 auto', padding: 'clamp(2rem, 5vh, 4rem) clamp(1rem, 5vw, 3rem) 0' }}>
 
           {/* Masthead */}
           <motion.div
             initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}
             style={{
-              display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
-              paddingBottom: '4rem', borderBottom: '1px solid var(--border)', marginBottom: '5rem',
+              display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'flex-start',
+              paddingBottom: 'clamp(2rem, 5vw, 4rem)', borderBottom: '1px solid var(--border)', marginBottom: 'clamp(3rem, 10vw, 5rem)',
+              gap: '1.5rem'
             }}
           >
             <div>
@@ -290,10 +291,13 @@ export const LandingPage: React.FC = () => {
               )}
             </motion.div>
 
-            {/* Stat bar — 4 columns with dividers */}
+            {/* Stat bar — Fluid Adaptive Grid */}
             <motion.div variants={fadeUp} style={{
-              display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)',
-              borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)',
+              display: 'grid', 
+              gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 150px), 1fr))',
+              borderTop: '1px solid var(--border)', 
+              background: 'var(--border)',
+              gap: '1px'
             }}>
               {[
                 { icon: Shield, code: 'SECURE', label: 'Cybersecurity'  },
@@ -305,7 +309,7 @@ export const LandingPage: React.FC = () => {
                 return (
                   <div key={i} style={{
                     padding: '1.5rem 1.25rem',
-                    borderRight: i < 3 ? '1px solid var(--border)' : 'none',
+                    background: '#080b12',
                     display: 'flex', flexDirection: 'column', gap: '0.6rem',
                   }}>
                     <Icon size={18} style={{ color: 'var(--accent)', opacity: 0.5 }} />
@@ -338,7 +342,9 @@ export const LandingPage: React.FC = () => {
 
           <Reveal>
             <div style={{
-              display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem',
+              display: 'grid', 
+              gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 400px), 1fr))', 
+              gap: '2rem',
               alignItems: 'flex-end', marginBottom: '4rem',
               paddingBottom: '3rem', borderBottom: '1px solid var(--border)',
             }}>
@@ -355,8 +361,13 @@ export const LandingPage: React.FC = () => {
             </div>
           </Reveal>
 
-          {/* 3-col step cards separated by 1px borders */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1px', background: 'var(--border)' }}>
+          {/* 3-col step cards - Fluid Stacking */}
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))', 
+            gap: '1px', 
+            background: 'var(--border)' 
+          }}>
             {HOW_IT_WORKS.map((item, i) => {
               const Icon = item.icon;
               return (
@@ -395,7 +406,9 @@ export const LandingPage: React.FC = () => {
 
           <Reveal>
             <div style={{
-              display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem',
+              display: 'grid', 
+              gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 400px), 1fr))', 
+              gap: '2rem',
               alignItems: 'flex-end', marginBottom: '4rem',
               paddingBottom: '3rem', borderBottom: '1px solid var(--border)',
             }}>
@@ -412,8 +425,13 @@ export const LandingPage: React.FC = () => {
             </div>
           </Reveal>
 
-          {/* 3-col path cards */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1px', background: 'var(--border)' }}>
+          {/* Path cards - Fluid Stacking */}
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 340px), 1fr))', 
+            gap: '1px', 
+            background: 'var(--border)' 
+          }}>
             {CAREER_PATHS.map((path, i) => (
               <Reveal key={path.id} delay={(i % 3) * 0.08}>
                 <motion.div

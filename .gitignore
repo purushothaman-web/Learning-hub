@@ -26,8 +26,9 @@ logs/
 *.log
 
 # Personal Progress (Local Database)
-backend/data/progress.json
-backend/data/practice.json
+backend/data/*.db
+backend/data/*.db-wal
+backend/data/*.db-shm
 
 # Editor / OS
 .vscode/

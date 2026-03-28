@@ -13,6 +13,7 @@ export const CustomizePath = () => {
   
   const careerPath = CAREER_PATHS.find(p => p.id === pathId);
   const [selectedTopicIds, setSelectedTopicIds] = useState<string[]>(careerPath?.topics || []);
+  const [dailyTarget, setDailyTarget] = useState(3);
 
   const handleToggle = (id: string) => {
     setSelectedTopicIds(prev => 
@@ -41,7 +42,8 @@ export const CustomizePath = () => {
         body: {
           careerPath: pathId,
           experienceLevel: level,
-          customPath: selectedTopicIds
+          customPath: selectedTopicIds,
+          dailyTarget
         }
       });
       window.dispatchEvent(new CustomEvent('progress-updated', { 
@@ -59,22 +61,26 @@ export const CustomizePath = () => {
 
   return (
     <div className="customize-screen" style={{
-      height: '100vh',
+      minHeight: '100vh',
       display: 'flex',
       flexDirection: 'column',
       background: 'var(--bg-void)',
-      padding: '2rem',
+      padding: 'clamp(2rem, 8vh, 4rem) clamp(1rem, 5vw, 2.5rem)',
       overflowY: 'auto'
     }}>
       <div style={{ maxWidth: '900px', width: '100%', margin: '0 auto', paddingTop: '2rem', paddingBottom: '4rem' }}>
         <h1 style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
           Customize your journey
         </h1>
-        <p style={{ color: 'var(--text-muted)', marginBottom: '3rem' }}>
+        <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem', marginBottom: '3rem', maxWidth: '600px' }}>
           Drag topics to reorder your priority or toggle them to skip what you already know.
         </p>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '3rem' }}>
+        <div style={{ 
+          display: 'grid', 
+          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 380px), 1fr))', 
+          gap: 'clamp(1.5rem, 4vw, 3rem)' 
+        }}>
           {/* Active Flow */}
           <div>
             <h3 style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.1em', marginBottom: '1.5rem', textTransform: 'uppercase' }}>
@@ -171,13 +177,50 @@ export const CustomizePath = () => {
           </div>
         </div>
 
+        {/* Momentum Strategy Picker */}
+        <div style={{ marginTop: '4rem' }}>
+          <h3 style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.1em', marginBottom: '1.5rem', textTransform: 'uppercase' }}>
+            Choose your momentum
+          </h3>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+            {[
+              { id: 1, label: 'Relaxed', desc: '1 lesson / day', icon: '🌱' },
+              { id: 3, label: 'Standard', desc: '3 lessons / day', icon: '⚡' },
+              { id: 5, label: 'Intense', desc: '5 lessons / day', icon: '🔥' },
+            ].map(strategy => (
+              <button
+                key={strategy.id}
+                onClick={() => setDailyTarget(strategy.id)}
+                style={{
+                  padding: '1.25rem',
+                  background: dailyTarget === strategy.id ? 'rgba(var(--accent-rgb), 0.05)' : 'var(--bg-surface)',
+                  border: dailyTarget === strategy.id ? '2px solid var(--accent)' : '1px solid var(--border)',
+                  borderRadius: '16px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.4rem',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  transition: 'all 0.2s'
+                }}
+              >
+                <div style={{ fontSize: '1.25rem', marginBottom: '0.25rem' }}>{strategy.icon}</div>
+                <div style={{ fontSize: '0.9rem', fontWeight: 700, color: dailyTarget === strategy.id ? 'var(--accent)' : 'var(--text-primary)' }}>{strategy.label}</div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-faint)' }}>{strategy.desc}</div>
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* Footer */}
         <div style={{ 
           marginTop: '4rem', 
           paddingTop: '2rem', 
           borderTop: '1px solid var(--border)',
           display: 'flex',
+          flexWrap: 'wrap',
           justifyContent: 'flex-end',
+          alignItems: 'center',
           gap: '1rem'
         }}>
           <button 

@@ -13,10 +13,39 @@ import { Onboarding } from './components/Onboarding';
 import { PathSuggestion } from './components/PathSuggestion';
 import { CustomizePath } from './components/CustomizePath';
 
+import { useState, useLayoutEffect } from 'react';
+import { useLocation } from 'react-router-dom';
+
 const AppLayout = () => {
+  const location = useLocation();
+  const [isSidebarExpanded, setIsSidebarExpanded] = useState(window.innerWidth >= 1024);
+  const isSpecialPage = location.pathname === '/dashboard' || location.pathname === '/playground';
+
+  // Responsive and Route tracking
+  useLayoutEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 1024) {
+        setIsSidebarExpanded(false);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    
+    // Check on route change
+    if (window.innerWidth < 1024 || isSpecialPage) {
+      setIsSidebarExpanded(false);
+    } else {
+      setIsSidebarExpanded(true);
+    }
+
+    return () => window.removeEventListener('resize', handleResize);
+  }, [location.pathname]);
+
+  const toggleSidebar = () => setIsSidebarExpanded(!isSidebarExpanded);
+
   return (
-    <div className="app-shell">
-      <Sidebar />
+    <div className={`app-shell ${isSidebarExpanded ? 'sidebar-expanded' : 'sidebar-collapsed'}`}>
+      <Sidebar isExpanded={isSidebarExpanded} onToggle={toggleSidebar} />
       <main className="app-main">
         <Outlet />
       </main>

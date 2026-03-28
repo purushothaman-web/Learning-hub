@@ -4,7 +4,7 @@ import { Play, Send, ChevronLeft, Terminal, FileCode, Info, Activity, ShieldChec
 import { apiRequest } from '../lib/api';
 import { useDSAProgress } from '../hooks/useDSAProgress';
 import { dsaProblems } from '../data/dsa-problems';
-import { lessonsData } from '../data/lessons';
+import { lessonsData } from '../data/lessons/index';
 import type { ProgressRecord, Lesson } from '../types/curriculum';
 
 type ChallengeData = {
@@ -42,6 +42,19 @@ export const Playground = () => {
   const [currentChallenge, setCurrentChallenge] = useState<ChallengeData | null>(location.state?.challenge || null);
   const [progress, setProgress] = useState<ProgressRecord>({});
   const { clearPracticePrompt } = useDSAProgress(progress, setProgress);
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+  const [showInstructions, setShowInstructions] = useState(window.innerWidth >= 1024);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowWidth(window.innerWidth);
+      if (window.innerWidth >= 1024) setShowInstructions(true);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const isMobile = windowWidth < 1024;
 
   const activeLesson: Lesson | undefined = (topic && lesson) 
     ? lessonsData[topic]?.find(l => l.id === lesson)
@@ -166,12 +179,15 @@ export const Playground = () => {
 
       {/* Top Bar */}
       <header style={{
-        height: 'var(--header-h)',
+        minHeight: 'var(--header-h)',
+        height: 'auto',
         background: 'var(--bg-surface)',
         borderBottom: '1px solid var(--border)',
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '0 1rem',
+        display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between',
+        padding: '0.5rem 1rem',
+        gap: '0.75rem',
         flexShrink: 0,
+        zIndex: 20
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           <button
@@ -182,17 +198,26 @@ export const Playground = () => {
           >
             <ChevronLeft size={18} />
           </button>
-          <div style={{ width: 1, height: 20, background: 'var(--border)' }} />
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-            <FileCode size={14} style={{ color: 'var(--accent)' }} />
-            <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+          <div style={{ width: 1, height: 20, background: 'var(--border)', display: isMobile ? 'none' : 'block' }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', minWidth: 0 }}>
+            <FileCode size={14} style={{ color: 'var(--accent)', flexShrink: 0 }} />
+            <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '0.72rem', color: 'var(--text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {topic || 'sandbox'}/{lesson || 'solution'}
               <span style={{ opacity: 0.5 }}>.ts</span>
             </span>
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+          {isMobile && (
+            <button
+              onClick={() => setShowInstructions(!showInstructions)}
+              className={`btn-ghost ${showInstructions ? 'active' : ''}`}
+              style={{ padding: '0.45rem', fontSize: '0.76rem', color: showInstructions ? 'var(--accent)' : 'var(--text-faint)' }}
+            >
+              <Info size={14} />
+            </button>
+          )}
           {currentChallenge && !evaluation && (
             <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '0.72rem', color: 'var(--text-faint)', marginRight: '0.5rem' }}>
               {fmt(elapsedTime)}
@@ -222,15 +247,30 @@ export const Playground = () => {
       {/* Main workspace */}
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
 
-        {/* Instructions Panel */}
+        {/* Instructions Panel - Adaptive Overlay */}
         <aside style={{
-          width: 300,
+          position: isMobile ? 'absolute' : 'relative',
+          top: isMobile ? 'var(--header-h)' : 0,
+          left: isMobile && !showInstructions ? '-100%' : 0,
+          width: isMobile ? 'min(100%, 360px)' : 300,
+          height: isMobile ? 'calc(100vh - var(--header-h))' : 'auto',
           background: 'var(--bg-surface)',
           borderRight: '1px solid var(--border)',
           display: 'flex', flexDirection: 'column',
           overflow: 'hidden',
           flexShrink: 0,
+          zIndex: 50,
+          transition: 'left 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          boxShadow: isMobile && showInstructions ? '20px 0 60px rgba(0,0,0,0.5)' : 'none'
         }}>
+          {isMobile && showInstructions && (
+            <button 
+              onClick={() => setShowInstructions(false)}
+              style={{ position: 'absolute', top: 8, right: 8, zIndex: 60, color: 'var(--text-faint)', background: 'var(--bg-raised)', border: '1px solid var(--border)', borderRadius: '6px', padding: '2px' }}
+            >
+              <X size={14} />
+            </button>
+          )}
           <div style={{
             height: 35, display: 'flex', alignItems: 'center', gap: '0.5rem',
             padding: '0 1rem',
@@ -349,7 +389,13 @@ export const Playground = () => {
         </aside>
 
         {/* Editor + Terminal */}
-        <main style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <main style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative' }}>
+          {isMobile && showInstructions && (
+            <div 
+              onClick={() => setShowInstructions(false)}
+              style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.3)', zIndex: 40, backdropFilter: 'blur(2px)' }} 
+            />
+          )}
 
           {/* Practice Prompt Banner */}
       {progress.pendingPracticePrompt && !currentChallenge && (
@@ -431,7 +477,7 @@ export const Playground = () => {
                 fontFamily: 'JetBrains Mono, monospace',
                 fontSize: '13.5px',
                 lineHeight: 1.7,
-                padding: '1.25rem 1.5rem',
+                padding: isMobile ? '1rem' : '1.25rem 1.5rem',
                 border: 'none',
                 outline: 'none',
                 resize: 'none',
@@ -522,7 +568,7 @@ export const Playground = () => {
                       {evaluation.feedbackSummary}
                     </p>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '1rem', marginBottom: '1rem' }}>
                       <div>
                         <div style={{ fontSize: '0.62rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--success)', marginBottom: '0.5rem' }}>Strengths</div>
                         {evaluation.strengths.map((s, i) => (

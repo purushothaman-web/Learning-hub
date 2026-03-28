@@ -1,26 +1,22 @@
 const express = require('express');
 const router = express.Router();
-const { PROGRESS_FILE } = require('../lib/config');
-const { readJsonFile, writeJsonFile } = require('../lib/db');
+const { setSetting } = require('../lib/profile');
 
 // Save onboarding results
 router.post('/complete', (req, res) => {
   try {
-    const { careerPath, experienceLevel, customPath } = req.body;
-    const data = readJsonFile(PROGRESS_FILE, {});
+    const { careerPath, experienceLevel, customPath, dailyTarget } = req.body;
     
-    const updated = {
-      ...data,
-      careerPath,
-      experienceLevel,
-      customPath: customPath || null,
-      onboardingCompleted: true,
-      lastUpdated: new Date().toISOString()
-    };
+    setSetting('careerPath', careerPath);
+    setSetting('experienceLevel', experienceLevel);
+    setSetting('customPath', customPath || null);
+    setSetting('dailyTarget', dailyTarget || 3);
+    setSetting('onboardingCompleted', true);
+    setSetting('lastUpdated', new Date().toISOString());
     
-    writeJsonFile(PROGRESS_FILE, updated);
-    res.json({ message: 'Onboarding completed successfully', data: updated });
+    res.json({ message: 'Onboarding completed successfully' });
   } catch (error) {
+    console.error('Onboarding save error:', error);
     res.status(500).json({ error: 'Failed to save onboarding data' });
   }
 });

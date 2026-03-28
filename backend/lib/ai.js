@@ -3,10 +3,15 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 const hasGeminiKey = () =>
   Boolean(process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY !== 'your_api_key_here');
 
-const createGeminiModel = () => {
+const createGeminiModel = (options = {}) => {
   if (!hasGeminiKey()) return null;
   const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-  return genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+  
+  // Spread options to support systemInstruction, generationConfig, etc.
+  return genAI.getGenerativeModel({ 
+    model: 'gemini-2.5-flash', 
+    ...options 
+  });
 };
 
 const parseJsonFromText = (text) => {

@@ -79,16 +79,37 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 /* ─── App Shell ─────────────────────────────── */
 .app-shell {
   display: grid;
-  grid-template-columns: var(--nav-width) var(--sidebar-width) 1fr;
   height: 100vh;
   width: 100vw;
   overflow: hidden;
+  transition: grid-template-columns 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Mobile First / Tablets: Sidebar replaces content or content replaces sidebar */
+@media (max-width: 1023px) {
+  .app-shell.sidebar-expanded {
+    grid-template-columns: var(--nav-width) 1fr 0px;
+  }
+  .app-shell.sidebar-collapsed {
+    grid-template-columns: var(--nav-width) 0px 1fr;
+  }
+}
+
+/* Laptops / Desktop: Icons + Sidebar (optional) + Content */
+@media (min-width: 1024px) {
+  .app-shell.sidebar-expanded {
+    grid-template-columns: var(--nav-width) var(--sidebar-width) 1fr;
+  }
+  .app-shell.sidebar-collapsed {
+    grid-template-columns: var(--nav-width) 0px 1fr;
+  }
 }
 
 .app-main {
   height: 100vh;
   overflow-y: auto;
   background: var(--bg-base);
+  width: 100%;
 }
 
 /* ─── Scrollbar ─────────────────────────────── */

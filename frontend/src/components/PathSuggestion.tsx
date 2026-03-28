@@ -41,41 +41,42 @@ export const PathSuggestion = () => {
 
   return (
     <div className="suggestion-screen" style={{
-      height: '100vh',
+      minHeight: '100%',
       display: 'flex',
       flexDirection: 'column',
       background: 'var(--bg-void)',
-      padding: '2rem',
+      padding: '4rem 1.5rem',
       overflowY: 'auto'
     }}>
-      <div style={{ maxWidth: '800px', width: '100%', margin: '0 auto', paddingTop: '4rem', paddingBottom: '4rem' }}>
-        <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
+      <div style={{ maxWidth: '800px', width: '100%', margin: '0 auto' }}>
+        <div style={{ textAlign: 'center', marginBottom: 'clamp(2rem, 8vh, 4rem)' }}>
           <div style={{ 
             display: 'inline-flex', 
             padding: '0.5rem 1rem', 
             background: 'rgba(var(--accent-rgb), 0.1)', 
             color: 'var(--accent)', 
             borderRadius: '99px', 
-            fontSize: '0.85rem', 
+            fontSize: '0.8rem', 
             fontWeight: 700,
-            marginBottom: '1rem',
-            border: '1px solid rgba(var(--accent-rgb), 0.2)'
+            marginBottom: '1.25rem',
+            border: '1px solid rgba(var(--accent-rgb), 0.2)',
+            letterSpacing: '0.05em'
           }}>
             PATH SUGGESTION
           </div>
-          <h1 style={{ fontSize: '2.5rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '1rem' }}>
+          <h1 style={{ fontSize: 'clamp(1.75rem, 5vw, 2.75rem)', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '1rem', lineHeight: 1.15 }}>
             We've mapped your journey.
           </h1>
-          <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem' }}>
+          <p style={{ color: 'var(--text-muted)', fontSize: 'clamp(0.95rem, 2vw, 1.15rem)', maxWidth: '600px', marginInline: 'auto' }}>
             Based on your profile, we recommend starting as an <strong>{suggestedLevel}</strong> in the <strong>{careerPath.title}</strong> path.
           </p>
         </div>
 
         {/* Visual Roadmap */}
-        <div className="roadmap-container" style={{ position: 'relative', paddingLeft: '2rem' }}>
+        <div className="roadmap-container" style={{ position: 'relative', paddingLeft: 'clamp(1.5rem, 4vw, 2rem)' }}>
           <div style={{ 
             position: 'absolute', 
-            left: 'calc(2rem + 6px)', 
+            left: 'calc(clamp(1.5rem, 4vw, 2rem) + 6px)', 
             top: 0, 
             bottom: 0, 
             width: '2px', 
@@ -85,8 +86,8 @@ export const PathSuggestion = () => {
           {pathTopics.map((topic, i) => (
             <div key={topic.id} style={{ 
               display: 'flex', 
-              gap: '1.5rem', 
-              marginBottom: '2rem', 
+              gap: 'clamp(1rem, 3vw, 1.5rem)', 
+              marginBottom: '1.5rem', 
               position: 'relative' 
             }}>
               <div style={{ 
@@ -105,7 +106,7 @@ export const PathSuggestion = () => {
                 background: 'var(--bg-surface)',
                 border: '1px solid var(--border)',
                 borderRadius: '12px',
-                padding: '1.25rem',
+                padding: 'clamp(1rem, 3vw, 1.25rem)',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '1rem'
@@ -118,15 +119,16 @@ export const PathSuggestion = () => {
                   display: 'flex', 
                   alignItems: 'center', 
                   justifyContent: 'center',
-                  color: 'var(--text-muted)'
+                  color: 'var(--text-muted)',
+                  flexShrink: 0
                 }}>
                   <topic.icon size={20} />
                 </div>
-                <div>
-                  <h4 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+                <div style={{ overflow: 'hidden' }}>
+                  <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0, whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
                     {topic.title}
                   </h4>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-faint)', marginTop: '2px' }}>
+                  <div style={{ fontSize: '0.7rem', color: 'var(--text-faint)', marginTop: '2px' }}>
                     {topic.level} • Milestone {i + 1}
                   </div>
                 </div>
@@ -136,7 +138,7 @@ export const PathSuggestion = () => {
           
           <div style={{ 
             display: 'flex', 
-            gap: '1.5rem', 
+            gap: 'clamp(1rem, 3vw, 1.5rem)', 
             position: 'relative',
             opacity: 0.5
           }}>
@@ -151,31 +153,35 @@ export const PathSuggestion = () => {
               flexShrink: 0
             }} />
             <div style={{ flex: 1, padding: '1rem' }}>
-              <span style={{ fontWeight: 700, color: 'var(--success)' }}>Goal Reached: {suggestedLevel} {careerPath.title} Ready</span>
+              <span style={{ fontWeight: 700, color: 'var(--success)', fontSize: '0.9rem' }}>Goal Reached: {suggestedLevel} Ready</span>
             </div>
           </div>
         </div>
 
         {/* Buttons */}
         <div style={{ 
-          marginTop: '5rem', 
+          marginTop: 'clamp(3rem, 10vh, 5rem)', 
           display: 'flex', 
+          flexWrap: 'wrap',
           gap: '1rem',
           justifyContent: 'center'
         }}>
           <button 
             onClick={() => navigate(`/customize?path=${pathId}&level=${suggestedLevel}`)}
             style={{
-              padding: '1.1rem 2rem',
+              flex: '1 1 200px',
+              maxWidth: '300px',
+              padding: '1rem 1.5rem',
               background: 'var(--bg-raised)',
               border: '1px solid var(--border)',
               borderRadius: '12px',
               color: 'var(--text-primary)',
               fontWeight: 700,
-              fontSize: '0.95rem',
+              fontSize: '0.9rem',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
+              justifyContent: 'center',
               gap: '0.6rem',
               transition: 'all 0.2s'
             }}
@@ -188,16 +194,19 @@ export const PathSuggestion = () => {
           <button 
             onClick={handleAccept}
             style={{
-              padding: '1.1rem 3rem',
+              flex: '1 1 200px',
+              maxWidth: '300px',
+              padding: '1rem 1.5rem',
               background: 'var(--accent)',
               border: 'none',
               borderRadius: '12px',
               color: 'white',
               fontWeight: 700,
-              fontSize: '0.95rem',
+              fontSize: '0.9rem',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
+              justifyContent: 'center',
               gap: '0.6rem',
               transition: 'all 0.2s',
               boxShadow: '0 4px 12px rgba(var(--accent-rgb), 0.3)'

@@ -1,42 +1,48 @@
 const express = require('express');
 const router = express.Router();
-const { LOG_FILE } = require('../lib/config');
-const { readJsonFile, writeJsonFile } = require('../lib/db');
+const { getDb } = require('../lib/db');
 
 router.post('/', (req, res) => {
   try {
     const { topicId, lessonId, durationSeconds } = req.body;
+    const db = getDb();
     
-    const logsDb = readJsonFile(LOG_FILE, { sessions: [] });
-    const session = {
-      id: `log_${Date.now()}`,
-      topicId,
-      lessonId,
-      durationSeconds,
-      timestamp: Date.now(),
-      date: new Date().toISOString().split('T')[0]
-    };
+    const id = `log_${Date.now()}`;
+    const timestamp = Date.now();
+    const date = new Date().toISOString().split('T')[0];
 
-    logsDb.sessions.push(session);
-    writeJsonFile(LOG_FILE, logsDb);
+    db.prepare(`
+      INSERT INTO study_sessions (id, topic_id, lesson_id, duration_seconds, timestamp, date)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `).run(id, topicId || 'general', lessonId || 'any', durationSeconds || 0, timestamp, date);
 
-    res.json({ message: 'Study session logged.', session });
+    res.json({ 
+      message: 'Study session logged.', 
+      session: { id, topicId, lessonId, durationSeconds, timestamp, date } 
+    });
   } catch (err) {
+    console.error('Log Error:', err);
     res.status(500).json({ error: 'Failed to log study session.' });
   }
 });
 
 router.get('/heatmap', (req, res) => {
   try {
-    const logsDb = readJsonFile(LOG_FILE, { sessions: [] });
-    const heatmap = {};
+    const db = getDb();
+    const rows = db.prepare(`
+      SELECT date, SUM(duration_seconds) as total_duration
+      FROM study_sessions
+      GROUP BY date
+    `).all();
 
-    logsDb.sessions.forEach(s => {
-      heatmap[s.date] = (heatmap[s.date] || 0) + (s.durationSeconds || 0);
+    const heatmap = {};
+    rows.forEach(row => {
+      heatmap[row.date] = row.total_duration;
     });
 
     res.json({ heatmap });
   } catch (err) {
+    console.error('Heatmap Error:', err);
     res.status(500).json({ error: 'Failed to generate heatmap.' });
   }
 });

@@ -21,6 +21,10 @@ const app = express();
 // Initialize Database
 initDb();
 
+// Run Migration (One-time or idempotent)
+const { migrateFromJson } = require('./lib/migrate');
+migrateFromJson();
+
 // Middleware
 app.use(cors());
 app.use(express.json());

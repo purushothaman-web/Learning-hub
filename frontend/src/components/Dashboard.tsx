@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, AreaChart, Area } from 'recharts';
 import { Trophy, Target, Zap, TrendingUp, ArrowUpRight, Activity, BarChart2, Lock, CheckCircle2, ChevronRight, Cpu, RefreshCw, Calendar, RotateCcw, BookOpen, Clock, ArrowRight, Flame } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
@@ -6,7 +6,7 @@ import { apiRequest } from '../lib/api';
 import { curriculum } from '../data/curriculum';
 import { CAREER_PATHS, type CareerPath } from '../data/paths';
 import { useNavigate } from 'react-router-dom';
-import { lessonsData } from '../data/lessons';
+import { lessonsData } from '../data/lessons/index';
 import type { ProgressRecord, Lesson, Topic } from '../types/curriculum';
 
 // ── Today's Focus logic ───────────────────────────────────────────────────────
@@ -189,6 +189,7 @@ export const Dashboard = () => {
   const [heatmap, setHeatmap] = useState<Record<string, number>>({});
   const [reviewQueue, setReviewQueue] = useState<Array<{ topicId: string; lessonId: string; reason: string }>>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isMomentumOpen, setIsMomentumOpen] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -214,11 +215,51 @@ export const Dashboard = () => {
         body: { onboardingCompleted: false, careerPath: null, experienceLevel: null }
       });
       window.dispatchEvent(new CustomEvent<ProgressRecord>('progress-updated', { detail: { onboardingCompleted: false, careerPath: undefined, experienceLevel: undefined } }));
-      navigate('/onboarding');
+      navigate('/welcome');
     } catch (err) {
       alert('Failed to reset path.');
     }
   };
+
+  const handleUpdateTarget = async (newTarget: number) => {
+    try {
+      await apiRequest('/api/progress', {
+        method: 'POST',
+        body: { dailyTarget: newTarget }
+      });
+      // Optimized: optimistic update localized to this component & global progress-updated event
+      setProgress(prev => prev ? { ...prev, dailyTarget: newTarget } : null);
+      window.dispatchEvent(new CustomEvent('progress-updated', { detail: { ...progress, dailyTarget: newTarget } }));
+      setIsMomentumOpen(false);
+    } catch (err) {
+      alert('Failed to update target.');
+    }
+  };
+
+  const activeCurriculum = useMemo(() => {
+    if (!progress) return curriculum;
+    if (progress.customPath) return curriculum.filter(t => progress.customPath!.includes(t.id));
+    if (progress.careerPath) {
+      const path = CAREER_PATHS.find((p: CareerPath) => p.id === progress.careerPath);
+      return path ? curriculum.filter(t => path.topics.includes(t.id)) : curriculum;
+    }
+    return curriculum;
+  }, [progress]);
+
+  const topicMap = useMemo(() => activeCurriculum.reduce((a, t) => ({ ...a, [t.id]: t.title }), {} as Record<string, string>), [activeCurriculum]);
+
+  const masteredToday = useMemo(() => {
+    if (!progress) return 0;
+    // In a real app, we'd check timestamps. For now, we'll count lessons 
+    // that were mastered in this session or are currently in progress.
+    const activeLessons = activeCurriculum.flatMap(t => progress[t.id] || []);
+    return Math.min(activeLessons.length, 1); // Mocking 1 for visual feedback until we have full SRS tracking
+  }, [progress, activeCurriculum]);
+
+  const focus = useMemo(() => {
+    if (!progress) return null;
+    return getTodaysFocus(progress as ProgressRecord, activeCurriculum);
+  }, [progress, activeCurriculum]);
 
   if (isLoading) return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
@@ -230,38 +271,84 @@ export const Dashboard = () => {
     </div>
   );
 
-  const activeCurriculum = progress?.customPath
-    ? curriculum.filter(t => progress.customPath!.includes(t.id))
-    : progress?.careerPath
-      ? curriculum.filter(t => CAREER_PATHS.find((p: CareerPath) => p.id === progress.careerPath)?.topics.includes(t.id))
-      : curriculum;
 
   if (!stats || stats.totalAttempts === 0) return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: '1.5rem', color: 'var(--text-faint)' }}>
-      <Zap size={40} style={{ opacity: 0.35 }} />
-      <div style={{ textAlign: 'center' }}>
-        <h2 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '0.4rem' }}>No data yet</h2>
-        <p style={{ fontSize: '0.82rem', marginBottom: '1.5rem' }}>Complete your first playground challenge to see stats for your path.</p>
-        <button 
-          onClick={() => navigate('/welcome')}
-          style={{ padding: '0.6rem 1.2rem', background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: '8px', color: 'var(--text-secondary)', fontSize: '0.8rem', cursor: 'pointer' }}
-        >
-          Change Career Path
-        </button>
+    <div style={{ height: '100vh', overflowY: 'auto', background: 'var(--bg-base)' }}>
+      <div style={{ maxWidth: 1100, margin: '0 auto', padding: '2.5rem 2rem 4rem' }} className="fade-up">
+        <header style={{ marginBottom: '2.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.75rem' }}>
+            <Zap size={16} style={{ color: 'var(--accent)' }} />
+            <span style={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--accent)' }}>
+              Getting Started
+            </span>
+          </div>
+          <h1 style={{ fontSize: '1.75rem', fontWeight: 800, letterSpacing: '-0.03em', color: 'var(--text-primary)' }}>
+            Welcome to the Studio
+          </h1>
+        </header>
+
+        {/* Daily Target Banner */}
+        <div style={{ 
+          marginBottom: '1.5rem', padding: '0.75rem 1.25rem', borderRadius: 12, 
+          background: 'var(--bg-surface)', border: '1px solid var(--border)',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          gap: '1rem', flexWrap: 'wrap'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--accent)', boxShadow: '0 0 10px var(--accent)' }} />
+            <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Daily Target: Master 3 new concepts</span>
+          </div>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            {[1, 2, 3].map(i => (
+              <div key={i} style={{ 
+                width: 10, height: 10, borderRadius: '50%', 
+                background: i <= masteredToday ? 'var(--accent)' : 'var(--bg-raised)',
+                border: i <= masteredToday ? 'none' : '1px solid var(--border)',
+                transition: 'all 0.3s ease'
+              }} />
+            ))}
+          </div>
+        </div>
+
+        {focus && (
+          <TodaysFocusCard
+            focus={focus}
+            onGo={() => navigate(`/topic/${focus.topic.id}?lesson=${focus.lesson.id}`)}
+          />
+        )}
+
+        <div style={{ 
+          background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 16, 
+          padding: '3rem 2rem', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' 
+        }}>
+          <BarChart2 size={40} style={{ opacity: 0.2, marginBottom: '1rem' }} />
+          <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)' }}>Your analytics will appear here</h2>
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-faint)', maxWidth: '400px', lineHeight: 1.6 }}>
+            Complete lessons and practice challenges in the playground to see your mastery metrics and growth history.
+          </p>
+          <button 
+            onClick={() => navigate('/welcome')}
+            className="btn-ghost"
+            style={{ marginTop: '1rem' }}
+          >
+            Explore Career Paths
+          </button>
+        </div>
       </div>
     </div>
   );
-
-  const topicMap = activeCurriculum.reduce((a, t) => ({ ...a, [t.id]: t.title }), {} as Record<string, string>);
   const chartData = stats.topicStats
     .filter(t => topicMap[t.topicId])
     .map(t => ({ name: topicMap[t.topicId], score: t.avgScore, attempts: t.attempts }))
     .sort((a, b) => b.score - a.score);
 
-  const metrics = [
+  // Daily target logic (Dynamic)
+  const actualTarget = progress?.dailyTarget || 3;
+  const targetMet = masteredToday; 
+  const dailyMetrics = [
     { icon: Trophy, label: 'Avg Score', value: `${stats.averageScore}%`, color: 'var(--accent)', trend: '+4% this week' },
     { icon: Activity, label: 'Attempts', value: stats.totalAttempts.toString(), color: 'var(--success)' },
-    { icon: Target, label: 'Topics ≥80%', value: stats.topicStats.filter(t => topicMap[t.topicId] && t.avgScore >= 80).length.toString(), color: 'var(--info)' },
+    { icon: Target, label: 'Daily Goal', value: `${targetMet}/${actualTarget}`, sub: 'Lessons', color: 'var(--info)' },
     { icon: TrendingUp, label: 'Best Topic', value: chartData[0]?.name || '—', sub: chartData[0] ? `${chartData[0].score}%` : '', color: '#8b5cf6' },
   ];
 
@@ -281,6 +368,73 @@ export const Dashboard = () => {
 
   return (
     <div style={{ height: '100vh', overflowY: 'auto', background: 'var(--bg-base)' }}>
+      {/* Momentum Popover - Moved to top level for correct fixed viewport centering */}
+      {isMomentumOpen && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)',
+          zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: '2rem'
+        }} onClick={() => setIsMomentumOpen(false)}>
+          <div 
+            style={{
+              width: '100%', maxWidth: '400px', background: 'var(--bg-surface)',
+              border: '1px solid var(--border)', borderRadius: '24px',
+              padding: '2rem', boxShadow: '0 32px 64px rgba(0,0,0,0.5)',
+              display: 'flex', flexDirection: 'column', gap: '1.5rem',
+              position: 'relative',
+              animation: 'modalSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div>
+              <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '0.4rem' }}>Momentum Strategy</h2>
+              <p style={{ fontSize: '0.82rem', color: 'var(--text-faint)' }}>How many concepts do you want to master today?</p>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              {[
+                { id: 1, label: 'Relaxed', desc: '1 lesson / day', icon: '🌱' },
+                { id: 3, label: 'Standard', desc: '3 lessons / day', icon: '⚡' },
+                { id: 5, label: 'Intense', desc: '5 lessons / day', icon: '🔥' },
+              ].map(strategy => (
+                <button
+                  key={strategy.id}
+                  onClick={() => handleUpdateTarget(strategy.id)}
+                  style={{
+                    padding: '1rem',
+                    background: actualTarget === strategy.id ? 'rgba(var(--accent-rgb), 0.05)' : 'var(--bg-raised)',
+                    border: actualTarget === strategy.id ? '2px solid var(--accent)' : '1px solid var(--border)',
+                    borderRadius: '16px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '1rem',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  <div style={{ fontSize: '1.25rem' }}>{strategy.icon}</div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: '0.85rem', fontWeight: 700, color: actualTarget === strategy.id ? 'var(--accent)' : 'var(--text-primary)' }}>{strategy.label}</div>
+                    <div style={{ fontSize: '0.7rem', color: 'var(--text-faint)' }}>{strategy.desc}</div>
+                  </div>
+                  {actualTarget === strategy.id && <CheckCircle2 size={16} style={{ color: 'var(--accent)' }} />}
+                </button>
+              ))}
+            </div>
+
+            <button 
+              onClick={() => setIsMomentumOpen(false)}
+              className="btn-ghost"
+              style={{ alignSelf: 'center', fontSize: '0.8rem' }}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+
       <div style={{ maxWidth: 1100, margin: '0 auto', padding: '2.5rem 2rem 4rem' }} className="fade-up">
 
         {/* Header */}
@@ -323,17 +477,42 @@ export const Dashboard = () => {
           </button>
         </header>
 
+        {/* Daily Target Banner - Interactive */}
+        <div 
+          onClick={() => setIsMomentumOpen(true)}
+          style={{ 
+            marginBottom: '1.5rem', padding: '0.75rem 1.25rem', borderRadius: 12, 
+            background: 'var(--bg-surface)', border: '1px solid var(--border)',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            gap: '1rem', flexWrap: 'wrap', cursor: 'pointer', transition: 'all 0.2s'
+          }}
+          className="hover-lift"
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--accent)', boxShadow: '0 0 10px var(--accent)' }} />
+            <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Daily Target: Master {actualTarget} new concept{actualTarget > 1 ? 's' : ''}</span>
+            <span style={{ fontSize: '0.65rem', color: 'var(--text-faint)', marginLeft: '0.2rem' }}>(Click to change)</span>
+          </div>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            {Array.from({ length: actualTarget }).map((_, i) => (
+              <div key={i} style={{ 
+                width: 10, height: 10, borderRadius: '50%', 
+                background: i < targetMet ? 'var(--accent)' : 'var(--bg-raised)',
+                border: i < targetMet ? 'none' : '1px solid var(--border)',
+                transition: 'all 0.3s ease'
+              }} />
+            ))}
+          </div>
+        </div>
+
+
         {/* Today's Focus */}
-        {(() => {
-          const focus = getTodaysFocus(progress as ProgressRecord, activeCurriculum);
-          if (!focus) return null;
-          return (
-            <TodaysFocusCard
-              focus={focus}
-              onGo={() => navigate(`/topic/${focus.topic.id}?lesson=${focus.lesson.id}`)}
-            />
-          );
-        })()}
+        {focus && (
+          <TodaysFocusCard
+            focus={focus}
+            onGo={() => navigate(`/topic/${focus.topic.id}?lesson=${focus.lesson.id}`)}
+          />
+        )}
 
         {/* Mandatory Mission Section */}
         {isBeginner && mandatoryTopicsList.length > 0 && (
@@ -357,7 +536,7 @@ export const Dashboard = () => {
                 {mandatoryTopicsList.filter(t => getTopicProgress(t.id) === 100).length} / {mandatoryTopicsList.length} Completed
               </div>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '1.25rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))', gap: '1.25rem', marginBottom: '1.5rem' }}>
               {mandatoryTopicsList.map(topic => {
                 const percent = getTopicProgress(topic.id);
                 const isDone = percent === 100;
@@ -423,8 +602,8 @@ export const Dashboard = () => {
         )}
 
         {/* Metric Cards */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem', marginBottom: '2rem' }}>
-          {metrics.map(({ icon: Icon, label, value, color, trend, sub }: { icon: LucideIcon, label: string, value: string | number, color: string, trend?: string, sub?: string }) => (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))', gap: '1rem', marginBottom: '2rem' }}>
+          {dailyMetrics.map(({ icon: Icon, label, value, color, trend, sub }: { icon: LucideIcon, label: string, value: string | number, color: string, trend?: string, sub?: string }) => (
             <div key={label} className="card" style={{ padding: '1.25rem', position: 'relative', overflow: 'hidden' }}>
               <div style={{ position: 'absolute', top: -16, right: -16, width: 60, height: 60, borderRadius: '50%', background: color, opacity: 0.08 }} />
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-faint)', marginBottom: '0.75rem' }}>
@@ -446,79 +625,155 @@ export const Dashboard = () => {
           ))}
         </div>
 
-        {/* Activity Heatmap & SRS Review */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '1.25rem', marginBottom: '2rem' }}>
+        {/* Activity Heatmap & SRS Review - Responsive Split */}
+        <div style={{ 
+          display: 'grid', 
+          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 400px), 1fr))', 
+          gap: '1.25rem', 
+          marginBottom: '2rem' 
+        }}>
           
-          {/* Heatmap */}
-          <div className="card" style={{ padding: '1.25rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1.25rem' }}>
-              <Calendar size={14} style={{ color: 'var(--accent)' }} />
-              <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-secondary)' }}>Activity Intensity</span>
+          {/* GitHub-style Full Year Heatmap */}
+          <div className="card" style={{ padding: '1.5rem', height: '280px', display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                <Calendar size={14} style={{ color: 'var(--accent)' }} />
+                <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-secondary)' }}>Activity Intensity</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.65rem', color: 'var(--text-faint)', fontWeight: 600 }}>
+                <span>Less</span>
+                <div style={{ width: 10, height: 10, borderRadius: 2, background: 'var(--bg-raised)', border: '1px solid var(--border)' }} />
+                <div style={{ width: 10, height: 10, borderRadius: 2, background: 'var(--accent)', opacity: 0.3 }} />
+                <div style={{ width: 10, height: 10, borderRadius: 2, background: 'var(--accent)', opacity: 0.7 }} />
+                <div style={{ width: 10, height: 10, borderRadius: 2, background: 'var(--accent)' }} />
+                <span>More</span>
+              </div>
             </div>
-            <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-              {Array.from({ length: 91 }).map((_, i) => {
-                const date = new Date();
-                date.setDate(date.getDate() - (90 - i));
-                const dateStr = date.toISOString().split('T')[0];
-                const intensity = heatmap[dateStr] || 0;
-                
-                let bgColor = 'var(--bg-raised)';
-                if (intensity > 3600) bgColor = 'var(--accent)'; // 1hr+
-                else if (intensity > 1800) bgColor = 'rgba(139, 92, 246, 0.6)'; // 30min+
-                else if (intensity > 0) bgColor = 'rgba(139, 92, 246, 0.2)'; // studied
-                
-                return (
-                  <div 
-                    key={dateStr}
-                    title={`${dateStr}: ${Math.round(intensity / 60)}m`}
-                    style={{ 
-                      width: 10, height: 10, borderRadius: 2, background: bgColor,
-                      border: intensity > 0 ? 'none' : '1px solid var(--border)' 
-                    }} 
-                  />
-                );
-              })}
+
+            <div style={{ flex: 1, overflowX: 'auto', overflowY: 'hidden', paddingBottom: '0.5rem', scrollbarWidth: 'thin' }}>
+              {/* Month Labels */}
+              <div style={{ display: 'flex', gap: '1px', marginBottom: '0.5rem', height: '14px', position: 'relative' }}>
+                {(() => {
+                  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                  const labels = [];
+                  const now = new Date();
+                  const start = new Date();
+                  start.setDate(now.getDate() - 364);
+                  start.setDate(start.getDate() - start.getDay()); // Sunday
+
+                  for (let i = 0; i < 53; i++) {
+                    const d = new Date(start);
+                    d.setDate(start.getDate() + (i * 7));
+                    if (i === 0 || d.getDate() <= 7) {
+                      labels.push(<span key={i} style={{ 
+                        position: 'absolute', left: i * 16, fontSize: '0.62rem', fontWeight: 600, color: 'var(--text-faint)', textTransform: 'uppercase' 
+                      }}>{months[d.getMonth()]}</span>);
+                    }
+                  }
+                  return labels;
+                })()}
+              </div>
+
+              {/* The Grid: 7 rows x 53 columns */}
+              <div style={{ 
+                display: 'grid', 
+                gridTemplateRows: 'repeat(7, 12px)', 
+                gridAutoFlow: 'column', 
+                gap: '4px',
+                width: 'fit-content'
+              }}>
+                {(() => {
+                  const dots = [];
+                  const now = new Date();
+                  const start = new Date();
+                  start.setDate(now.getDate() - 364);
+                  start.setDate(start.getDate() - start.getDay()); // Sunday
+
+                  for (let i = 0; i < 371; i++) {
+                    const date = new Date(start);
+                    date.setDate(start.getDate() + i);
+                    const dateStr = date.toISOString().split('T')[0];
+                    const intensity = heatmap[dateStr] || 0;
+                    
+                    let bgColor = 'var(--bg-raised)';
+                    let opacity = 1;
+                    
+                    if (intensity > 3600) bgColor = 'var(--accent)'; // 1hr+
+                    else if (intensity > 1800) { bgColor = 'var(--accent)'; opacity = 0.7; }
+                    else if (intensity > 0) { bgColor = 'var(--accent)'; opacity = 0.3; }
+                    
+                    dots.push(
+                      <div 
+                        key={dateStr}
+                        title={`${dateStr}: ${Math.round(intensity / 60)}m`}
+                        style={{ 
+                          width: 12, height: 12, borderRadius: 2, 
+                          background: bgColor,
+                          opacity: opacity,
+                          border: intensity > 0 ? 'none' : '1px solid var(--border)' 
+                        }} 
+                      />
+                    );
+                  }
+                  return dots;
+                })()}
+              </div>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.75rem', fontSize: '0.65rem', color: 'var(--text-faint)' }}>
-              <span>90 days ago</span>
-              <span>Today</span>
+            
+            <div style={{ marginTop: '0.75rem', fontSize: '0.6rem', color: 'var(--text-faint)', fontWeight: 700, letterSpacing: '0.05em' }}>
+              ACTUAL STUDY INTENSITY OVER THE LAST 12 MONTHS
             </div>
           </div>
 
-          {/* SRS Quote/Queue */}
-          <div className="card" style={{ padding: '1.25rem', background: reviewQueue.length > 0 ? 'var(--bg-surface)' : 'rgba(var(--accent-rgb), 0.02)' }}>
+          {/* SRS Review Queue */}
+          <div className="card" style={{ padding: '1.5rem', height: '280px', background: reviewQueue.length > 0 ? 'var(--bg-surface)' : 'rgba(var(--accent-rgb), 0.02)', display: 'flex', flexDirection: 'column' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1.25rem' }}>
               <RotateCcw size={14} style={{ color: reviewQueue.length > 0 ? 'var(--accent)' : 'var(--text-faint)' }} />
               <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-secondary)' }}>Review Queue</span>
             </div>
             {reviewQueue.length > 0 ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <div style={{ 
+                flex: 1,
+                display: 'flex', 
+                flexDirection: 'column', 
+                gap: '0.6rem',
+                overflowY: 'auto',
+                paddingRight: '4px',
+                msOverflowStyle: 'none', // Hide scrollbar for IE/Edge
+                scrollbarWidth: 'thin'  // Thin scrollbar for Firefox
+              }}>
                 {reviewQueue.map((item, idx) => (
                   <div 
                     key={idx}
                     onClick={() => navigate(`/topic/${item.topicId}?lesson=${item.lessonId}`)}
                     style={{ 
                       padding: '0.6rem 0.8rem', borderRadius: 8, background: 'var(--bg-raised)',
-                      border: '1px solid var(--border)', cursor: 'pointer', transition: 'all 0.2s'
+                      border: '1px solid var(--border)', cursor: 'pointer', transition: 'all 0.2s',
+                      flexShrink: 0
                     }}
                     onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--accent)'; }}
                     onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; }}
                   >
-                    <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-primary)' }}>{item.lessonId}</div>
-                    <div style={{ fontSize: '0.65rem', color: 'var(--accent)', fontWeight: 600 }}>{item.reason}</div>
+                    <div style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.1rem' }}>{item.lessonId}</div>
+                    <div style={{ fontSize: '0.6rem', color: 'var(--accent)', fontWeight: 700, letterSpacing: '0.02em' }}>{item.reason}</div>
                   </div>
                 ))}
               </div>
             ) : (
-              <div style={{ textAlign: 'center', padding: '1rem 0', color: 'var(--text-faint)' }}>
+              <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '1rem 0', color: 'var(--text-faint)' }}>
                  <p style={{ fontSize: '0.78rem' }}>No lessons due for review today. Keep it up! 🔥</p>
               </div>
             )}
           </div>
         </div>
 
-        {/* Charts */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: '1.25rem' }}>
+        {/* Charts - Stacking Layout */}
+        <div style={{ 
+          display: 'grid', 
+          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 450px), 1fr))', 
+          gap: '1.25rem',
+          marginBottom: '2rem'
+        }}>
 
           {/* Growth Chart */}
           <div className="card" style={{ overflow: 'hidden' }}>
@@ -584,10 +839,15 @@ export const Dashboard = () => {
 
         </div>
 
-        {/* DSA Progress Card & All Topics Table */}
-        <div style={{ display: 'grid', gridTemplateColumns: '350px 1fr', gap: '1.25rem', marginTop: '1.25rem' }}>
+        {/* DSA Progress Card & All Topics Table - Adaptive Grid */}
+        <div style={{ 
+          display: 'grid', 
+          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 350px), 1fr))', 
+          gap: '1.25rem', 
+          marginTop: '1.25rem' 
+        }}>
           {/* DSA Progress Card */}
-          <div className="card" style={{ height: 'fit-content', overflow: 'hidden' }}>
+          <div className="card" style={{ height: 'fit-content', overflow: 'hidden', minWidth: 0 }}>
             <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <Cpu size={14} style={{ color: 'var(--accent)' }} />
               <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-secondary)' }}>DSA Track Status</span>

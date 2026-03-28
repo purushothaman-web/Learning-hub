@@ -16,41 +16,40 @@ router.post('/', (req, res) => {
 
     // --- CASE A: SQL Sandbox (PostgreSQL Topic) ---
     if (topicId === 'postgresql') {
-      const sqlite3 = require('sqlite3').verbose();
-      const db = new sqlite3.Database(':memory:');
+      const Database = require('better-sqlite3');
+      const db = new Database(':memory:');
       
-      db.serialize(() => {
+      try {
         const commands = code.split(';').map(c => c.trim()).filter(c => c.length > 0);
         let lastResult = null;
-        let lastError = null;
 
         if (commands.length === 0) {
           return res.json({ output: 'No valid SQL commands found.' });
         }
 
-        let processedCount = 0;
-        commands.forEach((cmd, idx) => {
-          db.all(cmd, [], (err, rows) => {
-            processedCount++;
-            if (err) {
-              lastError = `SQL Error at command ${idx + 1}: ${err.message}`;
-            } else {
-              lastResult = rows;
+        for (const cmd of commands) {
+          // Check if it's a query that returns rows
+          const isQuery = /^\s*(SELECT|PRAGMA|WITH|SHOW|EXPLAIN|values)\s+/i.test(cmd);
+          if (isQuery) {
+            lastResult = db.prepare(cmd).all();
+          } else {
+            const info = db.prepare(cmd).run();
+            // If it's a mutation, we might want to show how many rows were affected
+            if (info.changes > 0) {
+              lastResult = { affectedRows: info.changes };
             }
+          }
+        }
 
-            if (processedCount === commands.length) {
-              db.close();
-              if (lastError) {
-                return res.json({ output: `--- SQL EXECUTION FAILED ---\n${lastError}` });
-              }
-              const output = lastResult 
-                ? JSON.stringify(lastResult, null, 2) 
-                : 'Command executed successfully (no rows returned).';
-              res.json({ output: `--- SQL RESULT SET ---\n${output}` });
-            }
-          });
-        });
-      });
+        db.close();
+        const output = lastResult 
+          ? JSON.stringify(lastResult, null, 2) 
+          : 'Command executed successfully (no rows returned).';
+        res.json({ output: `--- SQL RESULT SET ---\n${output}` });
+      } catch (err) {
+        if (db.open) db.close();
+        return res.json({ output: `--- SQL EXECUTION FAILED ---\nSQL Error: ${err.message}` });
+      }
       return;
     }
 

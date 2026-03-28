@@ -3,13 +3,18 @@ import { NavLink, useLocation, useSearchParams } from 'react-router-dom';
 import { TerminalSquare, BookOpen, BarChart2, ChevronRight, FileText, CheckCircle2, Search, X, GraduationCap, Lock, AlertCircle, RefreshCw, Download, Upload } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { curriculum } from '../data/curriculum';
-import { lessonsData } from '../data/lessons';
+import { lessonsData } from '../data/lessons/index';
 import { apiRequest } from '../lib/api';
 import logo from '../assets/logo.png';
 import { CAREER_PATHS } from '../data/paths';
 import type { Lesson, ProgressRecord } from '../types/curriculum';
 
-export const Sidebar = () => {
+interface SidebarProps {
+  isExpanded: boolean;
+  onToggle: () => void;
+}
+
+export const Sidebar = ({ isExpanded, onToggle }: SidebarProps) => {
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const isPlayground = location.pathname === '/playground';
@@ -136,7 +141,7 @@ export const Sidebar = () => {
         body: { onboardingCompleted: false, careerPath: null, experienceLevel: null }
       });
       window.dispatchEvent(new CustomEvent<ProgressRecord>('progress-updated', { detail: { onboardingCompleted: false, careerPath: undefined, experienceLevel: undefined } }));
-      navigate('/onboarding');
+      navigate('/welcome');
     } catch (err) {
       alert('Failed to reset path.');
     }
@@ -195,6 +200,23 @@ export const Sidebar = () => {
           zIndex: 20,
         }}
       >
+        {/* Toggle Button */}
+        <button 
+          onClick={onToggle}
+          title={isExpanded ? "Collapse Sidebar" : "Expand Sidebar"}
+          style={{ marginBottom: '1rem' }}
+          className={`nav-btn ${isExpanded ? 'active' : ''}`}
+        >
+          <ChevronRight 
+            size={18} 
+            strokeWidth={2} 
+            style={{ 
+              transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)', 
+              transform: isExpanded ? 'rotate(180deg)' : 'rotate(0)' 
+            }} 
+          />
+        </button>
+
         {/* Logo */}
         <div style={{ marginBottom: '1rem', padding: '0.25rem' }}>
           <img src={logo} alt="LHS" style={{ width: 28, height: 28, filter: 'brightness(1.1) saturate(0.8)' }} />
@@ -254,13 +276,16 @@ export const Sidebar = () => {
       {/* Explorer Panel */}
       <aside
         style={{
-          width: 'var(--sidebar-width)',
+          width: '100%', // Take up the full grid column width
           background: 'var(--bg-surface)',
           borderRight: '1px solid var(--border)',
-          display: 'flex',
+          display: 'flex', 
           flexDirection: 'column',
           height: '100vh',
           overflow: 'hidden',
+          visibility: isExpanded ? 'visible' : 'hidden', // Hide content visually
+          opacity: isExpanded ? 1 : 0,
+          transition: 'opacity 0.2s ease',
         }}
       >
         {/* Header */}
